@@ -53,20 +53,63 @@
       .obtenerDatosParaWeb();
   }
 
+  let filtroActual = "TODOS"; // Variable global para saber qué estamos viendo
+
   function renderizarUI(data) {
     recibosData = data.recibos;
     listadoCorreos = data.correosPredefinidos;
 
-    const listDiv = document.getElementById("receiptsList");
     document.getElementById("loadingIndicator").style.display = "none";
 
+    renderizarFiltros();
+    renderizarTarjetas();
+  }
+
+  function renderizarFiltros() {
+    const filterDiv = document.getElementById("filterContainer");
+    const hojasUnicas = [...new Set(recibosData.map((r) => r.nombreHoja))];
+
+    // Si no hay recibos, no mostramos filtros
     if (recibosData.length === 0) {
-      listDiv.innerHTML = `<div class="col-12"><div class="alert alert-success fw-bold text-center py-4"><i class="fa-solid fa-check-circle fs-2 mb-2 d-block text-success"></i>¡Al día! No hay recibos pendientes de procesar o enviar.</div></div>`;
+      filterDiv.innerHTML = "";
+      return;
+    }
+
+    // Botón "Todos"
+    let html = `<button class="btn btn-sm ${filtroActual === "TODOS" ? "btn-dark" : "btn-outline-secondary"} rounded-pill px-4 fw-bold" onclick="aplicarFiltro('TODOS')">Todos</button>`;
+
+    // Botón por cada marca/hoja
+    hojasUnicas.forEach((hoja) => {
+      html += `<button class="btn btn-sm ${filtroActual === hoja ? "btn-primary-custom" : "btn-outline-secondary"} rounded-pill px-4 fw-bold shadow-sm" onclick="aplicarFiltro('${hoja}')"><i class="fa-solid fa-folder-open me-1"></i> ${hoja}</button>`;
+    });
+
+    filterDiv.innerHTML = html;
+  }
+
+  function aplicarFiltro(hoja) {
+    filtroActual = hoja;
+    renderizarFiltros(); // Re-dibujar botones para cambiar colores
+    renderizarTarjetas(); // Re-dibujar tarjetas
+  }
+
+  function renderizarTarjetas() {
+    const listDiv = document.getElementById("receiptsList");
+
+    // Filtramos la data real basándonos en el botón seleccionado
+    const recibosFiltrados =
+      filtroActual === "TODOS"
+        ? recibosData
+        : recibosData.filter((r) => r.nombreHoja === filtroActual);
+
+    if (recibosFiltrados.length === 0) {
+      listDiv.innerHTML = `<div class="col-12"><div class="alert alert-success fw-bold text-center py-4"><i class="fa-solid fa-check-circle fs-2 mb-2 d-block text-success"></i>¡Al día! No hay recibos pendientes en esta vista.</div></div>`;
       return;
     }
 
     let html = "";
-    recibosData.forEach((r, index) => {
+    recibosFiltrados.forEach((r) => {
+      const indexReal = recibosData.indexOf(r); // Necesitamos el índice original para los modales
+
       const esFirmado = r.estadoFirma === "FIRMADO";
       const fotoCapturada = r.estatusFoto === "CAPTURADA";
       const importeFormateado = Number(r.importe).toLocaleString("en-US", {
@@ -74,20 +117,20 @@
         maximumFractionDigits: 2,
       });
 
-      // Si ya hay foto, bloqueamos el botón.
       const btnFotoHtml = fotoCapturada
         ? `<button class="btn btn-dark btn-sm flex-fill disabled" title="Foto ya capturada"><i class="fa-solid fa-camera"></i> Capturada</button>`
-        : `<button class="btn btn-dark btn-sm flex-fill" onclick="abrirModalFoto(${index})"><i class="fa-solid fa-camera"></i> Foto</button>`;
+        : `<button class="btn btn-dark btn-sm flex-fill" onclick="abrirModalFoto(${indexReal})"><i class="fa-solid fa-camera"></i> Foto</button>`;
 
       const btnFirmaHtml = esFirmado
         ? `<button class="btn btn-success btn-sm flex-fill disabled"><i class="fa-solid fa-check-double"></i> Firmado</button>`
-        : `<button class="btn btn-primary-custom btn-sm flex-fill" onclick="abrirModalFirma(${index})"><i class="fa-solid fa-pen-nib"></i> Firmar</button>`;
+        : `<button class="btn btn-primary-custom btn-sm flex-fill" onclick="abrirModalFirma(${indexReal})"><i class="fa-solid fa-pen-nib"></i> Firmar</button>`;
 
-      const btnEnviarHtml = `<button class="btn btn-blue btn-sm flex-fill ${!esFirmado ? "disabled" : ""}" onclick="abrirModalCorreo(${index})" ${!esFirmado ? 'title="Debe firmarse primero"' : ""}><i class="fa-solid fa-paper-plane"></i> Enviar</button>`;
+      const btnEnviarHtml = `<button class="btn btn-blue btn-sm flex-fill ${!esFirmado ? "disabled" : ""}" onclick="abrirModalCorreo(${indexReal})" ${!esFirmado ? 'title="Debe firmarse primero"' : ""}><i class="fa-solid fa-paper-plane"></i> Enviar</button>`;
 
       html += `
           <div class="col-md-6 col-lg-4">
-            <div class="card receipt-card p-3">
+            <div class="card receipt-card p-3 position-relative">
+              <span class="badge bg-light text-secondary position-absolute top-0 end-0 m-2 border">Fila ${r.rowIndex}</span>
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <div>
                   <h6 class="mb-0 fw-bold" style="color: var(--color-primary)">${r.folio}</h6>
