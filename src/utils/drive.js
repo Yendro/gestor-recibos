@@ -1,7 +1,9 @@
 function crearCapetaRaiz() {
-  const iter = DriveApp.getFoldersByName(CARPETA_RAIZ);
+  const config = obtenerConfiguracion();
+  const nombreRaiz = config.carpetaRaiz; // Dinámica
+  const iter = DriveApp.getFoldersByName(nombreRaiz);
   if (iter.hasNext()) return iter.next();
-  return DriveApp.createFolder(CARPETA_RAIZ);
+  return DriveApp.createFolder(nombreRaiz);
 }
 
 function crearCarpetaTipoRecibo(nombreHoja) {

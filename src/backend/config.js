@@ -1,5 +1,3 @@
-const CARPETA_RAIZ = "RecibosCaja-Test";
-const CARPETA_RECIBOS = "Recibos";
 const FORMATO_FECHA_CARPETA = "yyyy-MM-dd";
 const NOMBRE_HOJA_CONFIG = "Config";
 
@@ -17,6 +15,7 @@ const COLUMNAS = {
   ESTADO_CORREO: 10,
   DESTINATARIOS: 11,
   ESTATUS_FOTO: 12,
+  ELIMINAR: 13,
 };
 
 /**
@@ -33,10 +32,12 @@ function obtenerConfiguracion() {
     );
   }
 
-  // 1. Leer Plantillas (Rango A3:C10)
+  // Leer Carpeta Raíz
+  const carpetaRaiz =
+    hojaConfig.getRange("H2").getValue() || "Recibos-Generales";
+
   const datosPlantillas = hojaConfig.getRange("A3:D10").getValues();
   const plantillas = [];
-
   for (const fila of datosPlantillas) {
     if (fila[0] && fila[1]) {
       plantillas.push({
@@ -48,7 +49,7 @@ function obtenerConfiguracion() {
               .split(",")
               .map((e) => e.trim())
           : [],
-        prefijoFolio: fila[3] ? fila[3].toString().trim().toUpperCase() : "REC", // Recupera el prefijo
+        prefijoFolio: fila[3] ? fila[3].toString().trim().toUpperCase() : "REC",
       });
     }
   }
@@ -67,6 +68,7 @@ function obtenerConfiguracion() {
   }
 
   return {
+    carpetaRaiz: carpetaRaiz,
     plantillas: plantillas,
     directorioCorreos: directorioCorreos,
   };
