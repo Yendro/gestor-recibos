@@ -4,21 +4,23 @@ function crearCapetaRaiz() {
   return DriveApp.createFolder(CARPETA_RAIZ);
 }
 
-function crearCarpetaRecibos() {
+function crearCarpetaTipoRecibo(nombreHoja) {
   const raiz = crearCapetaRaiz();
-  const iter = raiz.getFoldersByName(CARPETA_RECIBOS);
+  const nombreCarpeta = `Recibos-${nombreHoja}`;
+  const iter = raiz.getFoldersByName(nombreCarpeta);
   if (iter.hasNext()) return iter.next();
-  return raiz.createFolder(CARPETA_RECIBOS);
+  return raiz.createFolder(nombreCarpeta);
 }
 
-function crearCarpertaPorFecha(fecha) {
-  const nombreCarpeta = Utilities.formatDate(
+function crearCarpertaPorFecha(fecha, nombreHoja) {
+  const nombreCarpetaFecha = Utilities.formatDate(
     fecha,
     Session.getScriptTimeZone(),
     FORMATO_FECHA_CARPETA,
   );
-  const carpetaRecibos = crearCarpetaRecibos();
-  const iter = carpetaRecibos.getFoldersByName(nombreCarpeta);
+  // Se crea dentro de la carpeta correspondiente a su hoja
+  const carpetaTipo = crearCarpetaTipoRecibo(nombreHoja);
+  const iter = carpetaTipo.getFoldersByName(nombreCarpetaFecha);
   if (iter.hasNext()) return iter.next();
-  return carpetaRecibos.createFolder(nombreCarpeta);
+  return carpetaTipo.createFolder(nombreCarpetaFecha);
 }
