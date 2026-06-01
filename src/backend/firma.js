@@ -1,7 +1,7 @@
-// Función exclusiva para procesar y guardar la foto
-function guardarFotoIdentificacion(base64Id, fila) {
+function guardarFotoIdentificacion(base64Id, fila, nombreHoja) {
   try {
-    const hoja = obtenerHoja();
+    const hoja =
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nombreHoja);
     const urlDoc = hoja
       .getRange(fila, COLUMNAS.ARCHIVO + 1)
       .getValue()
@@ -38,13 +38,17 @@ function guardarFotoIdentificacion(base64Id, fila) {
       textElementId.replaceText("{{IdentificacionCliente}}", "");
 
       const imgId = parentId.asParagraph().appendInlineImage(blobId);
-      const anchoId = 350;
+      const anchoId = 500;
       const propId = imgId.getHeight() / imgId.getWidth();
       imgId.setWidth(anchoId);
       imgId.setHeight(anchoId * propId);
     }
 
     doc.saveAndClose();
+
+    // Marcamos la foto como capturada en el Sheets
+    hoja.getRange(fila, COLUMNAS.ESTATUS_FOTO + 1).setValue("CAPTURADA");
+
     return { success: true };
   } catch (error) {
     console.error("Error en guardarFotoIdentificacion:", error);
@@ -52,10 +56,10 @@ function guardarFotoIdentificacion(base64Id, fila) {
   }
 }
 
-// Función exclusiva para la firma
-function procesarYGuardarFirmaWebApp(base64Firma, fila) {
+function procesarYGuardarFirmaWebApp(base64Firma, fila, nombreHoja) {
   try {
-    const hoja = obtenerHoja();
+    const hoja =
+      SpreadsheetApp.getActiveSpreadsheet().getSheetByName(nombreHoja);
     const urlDoc = hoja
       .getRange(fila, COLUMNAS.ARCHIVO + 1)
       .getValue()
@@ -86,16 +90,6 @@ function procesarYGuardarFirmaWebApp(base64Firma, fila) {
       const proporcion = img.getHeight() / img.getWidth();
       img.setWidth(anchoFirmaDeseado);
       img.setHeight(anchoFirmaDeseado * proporcion);
-    }
-
-    // Limpieza de etiqueta de foto si el usuario decidió firmar sin tomar foto
-    // HACER QUE ESTO SOLO SUCEDA SI NO HAY FOTO AL MOMENTO DE ENVIAR EL CORREO
-    const elementoId = body.findText("{{IdentificacionCliente}}");
-    if (elementoId) {
-      elementoId
-        .getElement()
-        .asText()
-        .replaceText("{{IdentificacionCliente}}", "");
     }
 
     doc.saveAndClose();
