@@ -33,7 +33,7 @@
             class="btn btn-light btn-sm fw-bold text-dark me-2"
             onclick="cargarDatos()"
           >
-            <i class="fa-solid fa-rotate-right"></i>
+            <i class="fa-solid fa-rotate-right"></i> Actualizar
           </button>
           <button
             class="btn btn-dark btn-sm fw-bold shadow-sm"
@@ -62,6 +62,257 @@
         class="d-flex gap-2 mb-4 overflow-auto pb-2 border-bottom"
       ></div>
       <div id="receiptsList" class="row"></div>
+    </div>
+    <div
+      class="modal fade"
+      id="modalFoto"
+      data-bs-backdrop="static"
+      tabindex="-1"
+    >
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold">
+              <i class="fa-solid fa-camera me-2"></i>Capturar Identificación
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              onclick="reiniciarCamaraUI()"
+            ></button>
+          </div>
+          <div class="modal-body text-center">
+            <p class="text-muted small mb-3">
+              Toma una foto de la identificación. Esta reemplazará la etiqueta
+              en el documento.
+            </p>
+
+            <input
+              type="file"
+              accept="image/jpeg, image/png"
+              capture="environment"
+              id="camera-input"
+              style="display: none"
+              onchange="procesarArchivoCamara(event)"
+            />
+            <img
+              id="photo-preview"
+              src=""
+              alt="Identificación capturada"
+              style="
+                display: none;
+                width: 100%;
+                border-radius: 8px;
+                border: 2px solid var(--color-primary);
+                margin-bottom: 15px;
+              "
+            />
+
+            <div class="d-flex gap-2 justify-content-center mt-2">
+              <button
+                class="btn btn-dark w-100"
+                id="btnCapture"
+                onclick="document.getElementById('camera-input').click()"
+              >
+                <i class="fa-solid fa-camera"></i> Tomar Foto
+              </button>
+              <button
+                class="btn btn-outline-secondary w-100"
+                id="btnRetake"
+                onclick="reiniciarCamaraUI()"
+                style="display: none"
+              >
+                <i class="fa-solid fa-rotate-left"></i> Repetir Foto
+              </button>
+            </div>
+            <div id="fotoAlert" class="text-danger fw-bold small mt-2"></div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button
+              type="button"
+              class="btn btn-secondary"
+              data-bs-dismiss="modal"
+              onclick="reiniciarCamaraUI()"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-dark px-4"
+              id="btnSaveFoto"
+              onclick="guardarFoto()"
+              disabled
+            >
+              <i class="fa-solid fa-cloud-arrow-up"></i> Guardar Foto
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="modalFirma"
+      data-bs-backdrop="static"
+      tabindex="-1"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold">
+              <i class="fa-solid fa-pen-nib me-2"></i>Validación y Firma
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              onclick="document.getElementById('docIframe').src = ''"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div class="row">
+              <div class="col-lg-7 mb-3">
+                <h6 class="fw-bold text-secondary">Vista Previa del Recibo</h6>
+                <div class="iframe-wrapper">
+                  <iframe id="docIframe" class="iframe-preview" src=""></iframe>
+                </div>
+              </div>
+              <div class="col-lg-5">
+                <div class="card border-0 shadow-sm h-100">
+                  <div class="card-body d-flex flex-column">
+                    <h6 class="fw-bold text-secondary mb-3">
+                      <i class="fa-solid fa-signature me-1"></i> Firma del
+                      Cliente (Obligatoria)
+                    </h6>
+                    <div
+                      class="canvas-wrapper flex-grow-1"
+                      style="min-height: 250px"
+                    >
+                      <canvas id="signature-pad"></canvas>
+                    </div>
+                    <div class="mt-3 text-end">
+                      <button
+                        class="btn btn-outline-danger btn-sm"
+                        onclick="signaturePad.clear()"
+                      >
+                        <i class="fa-solid fa-eraser"></i> Limpiar Firma
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer bg-light d-flex justify-content-between">
+            <div id="firmaAlert" class="text-danger fw-bold small"></div>
+            <div>
+              <button
+                type="button"
+                class="btn btn-secondary"
+                data-bs-dismiss="modal"
+                onclick="document.getElementById('docIframe').src = ''"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary-custom px-4"
+                id="btnInitiateSave"
+                onclick="iniciarGuardadoFirma()"
+              >
+                <i class="fa-solid fa-check-double"></i> Asignar Firma
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="modalConfirmacionFirma"
+      tabindex="-1"
+      style="background: rgba(0, 0, 0, 0.5)"
+    >
+      <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content shadow">
+          <div class="modal-body text-center p-4">
+            <i
+              class="fa-solid fa-triangle-exclamation text-warning fs-1 mb-3"
+            ></i>
+            <h6 class="fw-bold mb-3">¿Seguro que quiere guardar esta firma?</h6>
+            <p class="small text-muted mb-4">
+              La firma se insertará en el documento y no podrá ser modificada
+              posteriormente.
+            </p>
+            <div class="d-flex justify-content-center gap-2">
+              <button
+                type="button"
+                class="btn btn-light"
+                data-bs-dismiss="modal"
+              >
+                Revisar de nuevo
+              </button>
+              <button
+                type="button"
+                class="btn btn-primary-custom"
+                id="btnSaveProcess"
+                onclick="guardarProcesoCompleto()"
+              >
+                Sí, Guardar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="modalCorreo" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold">
+              <i
+                class="fa-solid fa-paper-plane me-2"
+                style="color: var(--color-btn-blue)"
+              ></i
+              >Enviar Recibo PDF
+            </h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <p class="small text-muted mb-3">
+              Selecciona los destinatarios a los que deseas enviar el documento.
+            </p>
+
+            <div id="emailCheckboxesContainer" class="row g-2 mb-3"></div>
+
+            <div
+              id="correoAlert"
+              class="alert d-none small p-2"
+              role="alert"
+            ></div>
+          </div>
+          <div class="modal-footer bg-light">
+            <button type="button" class="btn btn-light" data-bs-dismiss="modal">
+              Cancelar
+            </button>
+            <button
+              type="button"
+              class="btn btn-blue px-4"
+              id="btnSendEmail"
+              onclick="procesarEnvioCorreo()"
+            >
+              <i class="fa-solid fa-paper-plane"></i> Enviar Ahora
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <?!=
