@@ -16,8 +16,9 @@ function obtenerDatosParaWeb() {
   const config = obtenerConfiguracion(); // Obtenemos correos dinámicos
   const hojasData = obtenerHojasDeRecibos(); // Función que creamos en sheet.js
   const recibos = [];
+  const solicitudes = []; // Arreglo para las solicitudes
 
-  // Iteramos sobre TODAS las hojas de recibos
+  // 1. OBTENER RECIBOS PENDIENTES
   hojasData.forEach((data) => {
     const hoja = data.hoja;
     const nombreHoja = data.nombre;
@@ -50,8 +51,42 @@ function obtenerDatosParaWeb() {
     }
   });
 
+  // 2. OBTENER SOLICITUDES PENDIENTES
+  const spreadSheet = SpreadsheetApp.getActiveSpreadsheet();
+  const hojaSolicitudes = spreadSheet.getSheetByName(NOMBRE_HOJA_SOLICITUDES);
+
+  if (hojaSolicitudes) {
+    const datosSol = hojaSolicitudes.getDataRange().getValues();
+
+    for (let i = 1; i < datosSol.length; i++) {
+      const fila = datosSol[i];
+      const estadoConfirmacion = fila[5] || "PENDIENTE";
+      const estadoCorreoSol = fila[6] || "PENDIENTE";
+
+      // Solo traemos las que no han sido totalmente procesadas
+      if (
+        estadoConfirmacion !== "CONFIRMADO" ||
+        estadoCorreoSol !== "ENVIADO"
+      ) {
+        solicitudes.push({
+          rowIndex: i + 1,
+          marcaTemporal: fila[0],
+          cliente: fila[1] || "",
+          correoSolicitante: fila[2] || "",
+          concepto: fila[3] || "",
+          importe: fila[4] || 0,
+          estadoConfirmacion: estadoConfirmacion,
+          estadoCorreo: estadoCorreoSol,
+          destinatarios: fila[7] || "",
+        });
+      }
+    }
+  }
+
+  // 3. RETORNAR TODO AL FRONTEND
   return {
     recibos: recibos.reverse(),
+    solicitudes: solicitudes.reverse(), // Las más recientes arriba
     correosPredefinidos: config.directorioCorreos, // Mandamos los objetos {nombre, correo}
   };
 }
